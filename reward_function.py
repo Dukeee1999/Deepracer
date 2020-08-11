@@ -43,7 +43,7 @@ def reward_function(params):
     heading = params['heading']
 
     # negative exponential penalty
-    reward = math.exp(-6 * distance_from_center)
+    current_reward = math.exp(-6 * distance_from_center)
 
 
     ########################
@@ -95,6 +95,9 @@ def reward_function(params):
         
         # cornor road
         else: 
+            if speed > 4 - (0.4 * abs(steering)):
+                current_reward *= 0.8
+
             # left cornor 
             if direction > 0:
                 # left side 
@@ -161,21 +164,15 @@ def reward_function(params):
             current_reward += 0.8
         return current_reward
 
-    def throttle_reward(current_reward, speed, steering):
-        # Decrease throttle while steering
-        if speed > 2.5 - (0.4 * abs(steering)):
-            current_reward *= 0.8
-        return current_reward
-
     ########################
     ### Execute Rewards  ###
     ########################
 
-    reward = on_track_reward(reward, on_track)
-    reward = complex_reward(current_reward, steering, speed, track_width,distance_from_center, waypoints, closest_waypoints, heading)
+    current_reward = on_track_reward(current_reward, on_track)
+    current_reward = complex_reward(current_reward, steering, speed, track_width,
+                                    distance_from_center, waypoints, closest_waypoints, heading)
     # reward = straight_line_reward(reward, steering, speed)
     # reward = direction_reward(reward, waypoints, closest_waypoints, heading)
-    reward = steering_reward(reward, steering)
-    reward = throttle_reward(reward, speed, steering)
+    current_reward = steering_reward(current_reward, steering)
 
-    return float(reward)
+    return float(current_reward)
