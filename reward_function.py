@@ -1,4 +1,4 @@
- import math
+import math
 
 def reward_function(params):
     '''
