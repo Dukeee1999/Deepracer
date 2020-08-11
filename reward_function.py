@@ -1,4 +1,4 @@
- import math
+import math
 
 def reward_function(params):
     '''
@@ -31,6 +31,8 @@ def reward_function(params):
     ########################
     ### Input parameters ###
     ########################
+
+    left_side = params['is_left_of_center']
     on_track = params['all_wheels_on_track']
     distance_from_center = params['distance_from_center']
     track_width = params['track_width']
@@ -55,52 +57,103 @@ def reward_function(params):
             current_reward = MAX_REWARD
         return current_reward
 
-    def distance_from_center_reward(current_reward, track_width, distance_from_center):
-        # Calculate 3 marks that are farther and father away from the center line
-        marker_1 = 0.1 * track_width
-        marker_2 = 0.25 * track_width
-        marker_3 = 0.5 * track_width
-
-        # Give higher reward if the car is closer to center line and vice versa
-        if distance_from_center <= marker_1:
-            current_reward *= 1.2
-        elif distance_from_center <= marker_2:
-            current_reward *= 0.8
-        elif distance_from_center <= marker_3:
-            current_reward += 0.5
-        else:
-            current_reward = MIN_REWARD  # likely crashed/ close to off track
-
-        return current_reward
-
-    def straight_line_reward(current_reward, steering, speed):
-        # Positive reward if the car is in a straight line going fast
-        if abs(steering) < 0.1 and speed > 3:
-            current_reward *= 1.2
-        return current_reward
-
-    def direction_reward(current_reward, waypoints, closest_waypoints, heading):
-
-        '''
-        Calculate the direction of the center line based on the closest waypoints    
-        '''
-
+    def complex_reward(current_reward, steering, speed, track_width, distance_from_center, waypoints, closest_waypoints, heading):
         next_point = waypoints[closest_waypoints[1]]
         prev_point = waypoints[closest_waypoints[0]]
 
-        # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
-        direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0]) 
-        # Convert to degrees
+        direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0])
         direction = math.degrees(direction)
-
-        # Cacluate difference between track direction and car heading angle
+        abs_direction = abs(direction)
         direction_diff = abs(direction - heading)
 
-        # Penalize if the difference is too large
+        marker_1 = 0.1 * track_width
+        marker_2 = 0.25 * track_width
+        marker_3 = 0.5 * track_width
+        if abs_direction <= 110:
+
+
+            # Give higher reward if the car is closer to center line and vice versa
+            if distance_from_center <= marker_1:
+                current_reward *= 1.2
+            elif distance_from_center <= marker_2:
+                current_reward *= 0.8
+            elif distance_from_center <= marker_3:
+                current_reward += 0.5
+            else:
+                current_reward = MIN_REWARD  # likely crashed/ close to off track
+
+            # Positive reward if the car is in a straight line going fast
+            # straight 
+            if abs(steering) < 0.1 and speed < 3 :
+                current_reward *= 0.5
+
+            elif abs(steering) < 0.1 and speed > 3 and speed < 5:
+                current_reward *= 0.8
+
+            elif abs(steering) < 0.1 and speed == 5:
+                current_reward *= 1.2 
+        
+        # cornor road
+        else: 
+            # left cornor 
+            if direction > 0:
+                # left side 
+                if left_side ==True :
+                    if distance_from_center <= marker_1:
+                        current_reward += 0.5
+                    elif distance_from_center <= marker_2:
+                        current_reward *= 0.8
+                    elif distance_from_center <= marker_3:
+                        current_reward *= 1.2
+                    else:
+                        current_reward = MIN_REWARD  # likely crashed/ close to off track
+                else: 
+                    # if stay at right side 
+                    current_reward +=0.1 
+
+            # right cornor 
+            elif direction < 0:
+                if left_side == False:
+                    if distance_from_center <= marker_1:
+                        current_reward += 0.5
+                    elif distance_from_center <= marker_2:
+                        current_reward *= 0.8
+                    elif distance_from_center <= marker_3:
+                        current_reward *= 1.2
+                    else:
+                        current_reward = MIN_REWARD  # likely crashed/ close to off track
+                else:
+                    # if stay at left side
+                    current_reward += 0.1
         if direction_diff > DIRECTION_THRESHOLD:
             current_reward *= 0.5
 
+
+        # corner
         return current_reward
+
+    # def direction_reward(current_reward, waypoints, closest_waypoints, heading):
+
+    #     '''
+    #     Calculate the direction of the center line based on the closest waypoints    
+    #     '''
+
+    #     next_point = waypoints[closest_waypoints[1]]
+    #     prev_point = waypoints[closest_waypoints[0]]
+
+    #     # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
+    #     direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0]) 
+    #     # Convert to degrees
+    #     direction = math.degrees(direction)
+
+    #     # Cacluate difference between track direction and car heading angle
+    #     direction_diff = abs(direction - heading)
+
+    #     # Penalize if the difference is too large
+    #     if direction_diff > DIRECTION_THRESHOLD:
+    #         current_reward *= 0.5
+
+    #     return current_reward
 
     def steering_reward(current_reward, steering):
         # Penalize reward if the car is steering too much (your action space will matter)
@@ -119,9 +172,9 @@ def reward_function(params):
     ########################
 
     reward = on_track_reward(reward, on_track)
-    reward = distance_from_center_reward(reward, track_width, distance_from_center)
-    reward = straight_line_reward(reward, steering, speed)
-    reward = direction_reward(reward, waypoints, closest_waypoints, heading)
+    reward = complex_reward(current_reward, steering, speed, track_width,distance_from_center, waypoints, closest_waypoints, heading)
+    # reward = straight_line_reward(reward, steering, speed)
+    # reward = direction_reward(reward, waypoints, closest_waypoints, heading)
     reward = steering_reward(reward, steering)
     reward = throttle_reward(reward, speed, steering)
 
