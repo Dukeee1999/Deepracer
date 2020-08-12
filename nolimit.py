@@ -74,26 +74,36 @@ def reward_function(params):
         if abs_direction <= 110:
 
             # Give higher reward if the car is closer to center line and vice versa
-            if distance_from_center <= marker_1:
+
+
+            if distance_from_center > marker_1:
                 current_reward *= 1.2
-            elif distance_from_center <= marker_2:
-                current_reward *= 0.8
-            elif distance_from_center <= marker_3:
-                current_reward += 0.5
-            else:
+            # elif distance_from_center <= marker_2:
+            #     current_reward *= 0.8
+            # elif distance_from_center <= marker_3:
+            #     current_reward += 0.5
+            # else:
                 current_reward = MIN_REWARD  # likely crashed/ close to off track
+
+            if speed  == 5:
+                current_reward *=1.2
+            elif speed <5 and speed >=4:
+                current_reward *=1.1
+            else :
+                current_reward+=1
 
             # Positive reward if the car is in a straight line going fast
             # straight
-            if abs(steering) < 0.1 and speed < 3:
-                current_reward *= 0.5
-
-            elif abs(steering) < 0.1 and speed > 3 and speed < 5:
-                current_reward *= 0.8
-
-            elif abs(steering) < 0.1 and speed == 5:
+            if abs(steering) < 0.1:
                 current_reward *= 1.2
+            elif abs(steering) < 0.2 and abs(steering)>= 0.1:
+                current_reward *= 1.1
+            elif abs(steering) < 0.3 and abs(steering) >= 0.2:
+                current_reward +=0.8
 
+            elif abs(steering) < 0.5 and abs(steering) >= 0.4:
+                current_reward *=1
+                
         # cornor road
         else:
             if speed > 4 - (0.4 * abs(steering)):

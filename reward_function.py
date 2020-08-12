@@ -84,19 +84,13 @@ def reward_function(params):
 
             # Positive reward if the car is in a straight line going fast
             # straight 
-            if abs(steering) < 0.1 and speed < 3 :
-                current_reward *= 0.5
 
-            elif abs(steering) < 0.1 and speed > 3 and speed < 5:
-                current_reward *= 0.8
-
-            elif abs(steering) < 0.1 and speed == 5:
-                current_reward *= 1.2 
+            if abs(steering) < 0.1 and speed ==5:
+                current_reward *= 1.2
+            else:
+                current_reward += 1.2 
         
         # cornor road
-        else: 
-            if speed > 4 - (0.4 * abs(steering)):
-                current_reward *= 0.8
 
             # left cornor 
             if direction > 0:
@@ -135,28 +129,6 @@ def reward_function(params):
         # corner
         return current_reward
 
-    # def direction_reward(current_reward, waypoints, closest_waypoints, heading):
-
-    #     '''
-    #     Calculate the direction of the center line based on the closest waypoints    
-    #     '''
-
-    #     next_point = waypoints[closest_waypoints[1]]
-    #     prev_point = waypoints[closest_waypoints[0]]
-
-    #     # Calculate the direction in radius, arctan2(dy, dx), the result is (-pi, pi) in radians
-    #     direction = math.atan2(next_point[1] - prev_point[1], next_point[0] - prev_point[0]) 
-    #     # Convert to degrees
-    #     direction = math.degrees(direction)
-
-    #     # Cacluate difference between track direction and car heading angle
-    #     direction_diff = abs(direction - heading)
-
-    #     # Penalize if the difference is too large
-    #     if direction_diff > DIRECTION_THRESHOLD:
-    #         current_reward *= 0.5
-
-    #     return current_reward
 
     def steering_reward(current_reward, steering):
         # Penalize reward if the car is steering too much (your action space will matter)
@@ -171,8 +143,7 @@ def reward_function(params):
     current_reward = on_track_reward(current_reward, on_track)
     current_reward = complex_reward(current_reward, steering, speed, track_width,
                                     distance_from_center, waypoints, closest_waypoints, heading)
-    # reward = straight_line_reward(reward, steering, speed)
-    # reward = direction_reward(reward, waypoints, closest_waypoints, heading)
+
     current_reward = steering_reward(current_reward, steering)
 
     return float(current_reward)
